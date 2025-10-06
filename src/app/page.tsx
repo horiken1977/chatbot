@@ -75,7 +75,7 @@ export default function Home() {
       <header style={{ padding: '1rem', borderBottom: '1px solid #e0e0e0', background: '#fff' }}>
         <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600 }}>マーケティング知識チャットボット</h1>
         <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem', color: '#666' }}>
-          10シート（263チャンク）のデータでテスト中
+          全182シート（4,879チャンク）のデータで稼働中
         </p>
       </header>
 
