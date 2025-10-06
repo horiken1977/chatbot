@@ -1,9 +1,10 @@
-export default function ChatPage({
+export default async function ChatPage({
   params,
 }: {
-  params: { category: string };
+  params: Promise<{ category: string }>;
 }) {
-  const categoryName = params.category === "btob" ? "BtoB" : "BtoC";
+  const { category } = await params;
+  const categoryName = category === "btob" ? "BtoB" : "BtoC";
 
   return (
     <main className="flex min-h-screen flex-col">
