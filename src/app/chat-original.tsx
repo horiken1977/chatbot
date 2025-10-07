@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -15,15 +14,7 @@ interface Message {
   }>;
 }
 
-export default function ChatPage({
-  params,
-}: {
-  params: Promise<{ category: string }>;
-}) {
-  const { category } = use(params);
-  const categoryName = category === 'btob' ? 'BtoB' : 'BtoC';
-  const dataInfo = category === 'btob' ? '全164シート（5,162チャンク）' : '全182シート（4,879チャンク）';
-
+export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,7 +41,6 @@ export default function ChatPage({
         },
         body: JSON.stringify({
           message: input,
-          category: category === 'btob' ? 'BtoB' : 'BtoC',
           maxResults: 5,
         }),
       });
@@ -82,23 +72,18 @@ export default function ChatPage({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       {/* Header */}
-      <header style={{ padding: '1rem', borderBottom: '1px solid #e0e0e0', background: '#fff', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <Link href="/" style={{ textDecoration: 'none', fontSize: '1.5rem', color: '#666' }}>
-          ←
-        </Link>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600 }}>{categoryName}マーケティング知識チャットボット</h1>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem', color: '#666' }}>
-            {dataInfo}
-          </p>
-        </div>
+      <header style={{ padding: '1rem', borderBottom: '1px solid #e0e0e0', background: '#fff' }}>
+        <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600 }}>マーケティング知識チャットボット</h1>
+        <p style={{ margin: '0.5rem 0 0', fontSize: '0.875rem', color: '#666' }}>
+          全182シート（4,879チャンク）のデータで稼働中
+        </p>
       </header>
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', background: '#f5f5f5' }}>
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
-            <p>{categoryName}マーケティングについて質問してください</p>
+            <p>マーケティングについて質問してください</p>
             <div style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
               <p>例: マーケティングとは何ですか？</p>
               <p>例: 継続顧客の重要性について教えてください</p>

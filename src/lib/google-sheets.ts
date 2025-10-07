@@ -239,17 +239,63 @@ export function generateSheetNames(start: number = 1, end: number = 182): string
 }
 
 /**
+ * B6CH01000〜B6CH06033のシート名を生成（BtoB用）
+ *
+ * シート名の形式: B6CH[章番号2桁][章内番号3桁]
+ * 例: B6CH01000, B6CH01001, ..., B6CH06033
+ *
+ * @param start - 開始番号（デフォルト: 1）
+ * @param end - 終了番号（デフォルト: 185）
+ * @returns シート名の配列
+ */
+export function generateBtoBSheetNames(start: number = 1, end: number = 185): string[] {
+  const sheetNames: string[] = [];
+
+  // 各章のシート数（B6スプレッドシート構造に基づく）
+  const chaptersMap = [
+    { chapter: 1, count: 35 },   // B6CH01000 ~ B6CH01034
+    { chapter: 2, count: 34 },   // B6CH02000 ~ B6CH02033
+    { chapter: 3, count: 34 },   // B6CH03000 ~ B6CH03033
+    { chapter: 4, count: 30 },   // B6CH04000 ~ B6CH04029
+    { chapter: 5, count: 29 },   // B6CH05000 ~ B6CH05028
+    { chapter: 6, count: 34 },   // B6CH06000 ~ B6CH06033
+  ];
+
+  let globalIndex = 0;
+
+  for (const { chapter, count } of chaptersMap) {
+    for (let sheetNum = 0; sheetNum < count; sheetNum++) {
+      globalIndex++;
+
+      if (globalIndex < start) continue;
+      if (globalIndex > end) return sheetNames;
+
+      const chapterPadded = String(chapter).padStart(2, '0');
+      const sheetNumPadded = String(sheetNum).padStart(3, '0');
+      sheetNames.push(`B6CH${chapterPadded}${sheetNumPadded}`);
+    }
+  }
+
+  return sheetNames;
+}
+
+/**
  * BtoB/BtoCのカテゴリ判定
  *
- * シート名からカテゴリを推定（将来的には別のロジックに置き換え可能）
+ * シート名からカテゴリを推定
  *
  * @param sheetName - シート名
  * @returns 'BtoB' | 'BtoC'
  */
 export function getCategoryFromSheetName(sheetName: string): 'BtoB' | 'BtoC' {
-  // 現時点ではシート名だけでは判定できないため、
-  // デフォルトでBtoCを返す
-  // TODO: メタデータや別の方法でカテゴリを判定する仕組みが必要
+  // B6から始まるシート名はBtoB、M6から始まるシート名はBtoC
+  if (sheetName.startsWith('B6CH')) {
+    return 'BtoB';
+  }
+  if (sheetName.startsWith('M6CH')) {
+    return 'BtoC';
+  }
+  // デフォルトはBtoC
   return 'BtoC';
 }
 
