@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    console.log('User question:', message);
+    console.log('User question:', message, 'Category:', category);
 
     // 1. 質問を埋め込みベクトルに変換
     const queryEmbedding = await generateEmbedding(message);
@@ -44,8 +44,16 @@ export async function POST(request: NextRequest) {
       throw new Error(`Knowledge search failed: ${error.message}`);
     }
 
-    // 3. セクション優先度でフィルタリング＆スコアリング
-    const allMatches = (matches || []) as KnowledgeMatch[];
+    // 3. カテゴリでフィルタリング（BtoB/BtoC）
+    let allMatches = (matches || []) as KnowledgeMatch[];
+    if (category) {
+      allMatches = allMatches.filter(
+        (match) => match.metadata.category === category
+      );
+      console.log(`Filtered by category (${category}): ${allMatches.length} matches`);
+    }
+
+    // 4. セクション優先度でフィルタリング＆スコアリング
     const knowledgeMatches = rankAndFilterMatches(allMatches, maxResults);
     console.log(`Found ${knowledgeMatches.length} relevant chunks after filtering`);
 
