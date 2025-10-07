@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
     // 1. 質問を埋め込みベクトルに変換
     const queryEmbedding = await generateEmbedding(message);
 
-    // 2. 類似チャンクを検索（多めに取得してフィルタリング）
+    // 2. 類似チャンクを検索（survey/question除外のため多めに取得）
     const supabase = getSupabaseAdmin();
     const { data: matches, error } = await supabase.rpc('match_knowledge', {
       query_embedding: queryEmbedding,
-      match_threshold: 0.5,
-      match_count: maxResults * 3, // 15件取得してフィルタ
+      match_threshold: 0.3, // しきい値を下げて幅広く取得
+      match_count: maxResults * 10, // 50件取得してsurvey/questionをフィルタ
     });
 
     if (error) {
@@ -130,7 +130,7 @@ function rankAndFilterMatches(matches: KnowledgeMatch[], limit: number): Knowled
     article: 1.2,
     description: 1.1,
     text: 1.0,
-    survey: 0.8, // アンケートは優先度低
+    survey: 0.0, // surveyは検索結果から除外
   };
 
   // 再スコアリング
@@ -145,11 +145,16 @@ function rankAndFilterMatches(matches: KnowledgeMatch[], limit: number): Knowled
     };
   });
 
+  // survey/questionタイプを除外（学習者への質問は回答内容ではないため）
+  const filteredMatches = scoredMatches.filter(
+    (match) => match.metadata.type !== 'survey' && match.metadata.type !== 'question'
+  );
+
   // 調整後スコアでソート
-  scoredMatches.sort((a, b) => b.adjustedScore - a.adjustedScore);
+  filteredMatches.sort((a, b) => b.adjustedScore - a.adjustedScore);
 
   // 上位limit件を返す
-  return scoredMatches.slice(0, limit);
+  return filteredMatches.slice(0, limit);
 }
 
 /**
