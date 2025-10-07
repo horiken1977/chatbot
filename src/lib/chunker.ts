@@ -192,6 +192,9 @@ export function createChunksFromRow(
   // チャンク分割
   const contentChunks = splitTextByTokens(processedContent, maxTokens);
 
+  // カテゴリを判定（sheetNameから）
+  const category = sheetName.startsWith('M6CH') ? 'BtoC' : sheetName.startsWith('B6CH') ? 'BtoB' : 'Unknown';
+
   // メタデータ作成
   const baseMetadata: ChunkMetadata = {
     sheetName,
@@ -199,6 +202,7 @@ export function createChunksFromRow(
     type: row.type || 'text',
     messageId: row.message_id,
     hasChoices: Boolean(row.choices),
+    category,
   };
 
   if (row.correct_answer) {

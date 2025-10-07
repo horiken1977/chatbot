@@ -45,18 +45,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. カテゴリでフィルタリング（BtoB/BtoC）
-    // sheetNameから判断（M6CH=BtoC, B6CH=BtoB）
     let allMatches = (matches || []) as KnowledgeMatch[];
     if (category) {
-      allMatches = allMatches.filter((match) => {
-        const sheetName = match.metadata.sheetName as string;
-        const isBtoC = sheetName?.startsWith('M6CH');
-        const isBtoB = sheetName?.startsWith('B6CH');
-
-        if (category === 'BtoC' && isBtoC) return true;
-        if (category === 'BtoB' && isBtoB) return true;
-        return false;
-      });
+      allMatches = allMatches.filter(
+        (match) => match.metadata.category === category
+      );
       console.log(`Filtered by category (${category}): ${allMatches.length} matches`);
     }
 
