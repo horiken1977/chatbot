@@ -7,11 +7,8 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   sources?: Array<{
-    sheetName: string;
-    section: string;
-    type: string;
+    displayName: string;
     similarity: number;
-    contentPreview: string;
   }>;
 }
 
@@ -133,7 +130,7 @@ export default function ChatPage({
                   <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.5rem' }}>
                     {msg.sources.map((source, i) => (
                       <li key={i} style={{ marginBottom: '0.25rem' }}>
-                        {source.sheetName} - {source.section} (類似度: {(source.similarity * 100).toFixed(1)}%)
+                        {source.displayName} (類似度: {(source.similarity * 100).toFixed(1)}%)
                       </li>
                     ))}
                   </ul>
