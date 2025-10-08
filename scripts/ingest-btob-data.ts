@@ -135,7 +135,7 @@ async function ingestData(options: IngestionOptions = {}) {
               content: chunk.content,
               context: chunk.context,
               metadata: chunk.metadata,
-              embedding: embeddings[index],
+              embedding: `[${embeddings[index].join(',')}]`, // vector型の文字列表現に変換
             }));
 
             const { data, error } = await supabase.from('knowledge_base').insert(insertData).select();

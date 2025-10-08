@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     // 2. 類似チャンクを検索（survey/question除外のため多めに取得）
     const supabase = getSupabaseAdmin();
     const { data: matches, error } = await supabase.rpc('match_knowledge', {
-      query_embedding: queryEmbedding,
+      query_embedding: `[${queryEmbedding.join(',')}]`, // vector型の文字列表現に変換
       match_threshold: 0.3, // しきい値を下げて幅広く取得
       match_count: maxResults * 10, // 50件取得してsurvey/questionをフィルタ
     });
