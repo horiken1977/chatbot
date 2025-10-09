@@ -166,6 +166,82 @@
 
 ---
 
+### セッション3: カテゴリフィルタリングのDB最適化
+
+#### 実施日時
+- 2025-10-09 09:00 - 11:00 (クラッシュリカバリー含む)
+
+#### 実施内容
+1. **クラッシュからのリカバリー**
+   - ✅ session-log.md から前回の作業内容を確認
+   - ✅ git status/diff で未コミット変更を確認
+   - ✅ 継続中のタスク（カテゴリフィルタDB最適化）を特定
+
+2. **Supabase マイグレーション適用**
+   - ✅ マイグレーションファイル作成済み: `003_match_knowledge_by_category.sql`
+   - ✅ 新RPC関数 `match_knowledge_by_category` をSupabase SQLエディタで手動適用
+   - ✅ カテゴリでフィルタするベクトル検索関数（WHERE句でDB側フィルタ）
+
+3. **チャットAPI更新**
+   - ✅ `src/app/api/chat/route.ts` を新RPC関数に切り替え
+   - ✅ アプリケーション側フィルタ → DB側フィルタに変更（パフォーマンス改善）
+   - ✅ `KnowledgeMatch` インターフェースに `category` フィールド追加
+
+4. **埋め込み生成のエラーハンドリング改善**
+   - ✅ `src/lib/gemini.ts`: バッチ処理でのインデックス保持を修正
+   - ✅ エラー時は `null` を返す（ゼロベクトルではなく）
+   - ✅ `scripts/ingest-data.ts`, `scripts/ingest-btob-data.ts`: null をスキップしてDB挿入
+
+5. **テストスクリプト作成**
+   - ✅ `scripts/test-category-filter.ts`: RPC関数の動作確認
+   - ✅ `scripts/test-chat-api.ts`: チャットAPIの動作確認
+
+#### 動作確認
+- ✅ 新RPC関数 `match_knowledge_by_category` が正常に作成された
+- ✅ BtoBフィルタで10件のBtoB専用結果を取得
+- ✅ BtoCフィルタで10件のBtoC専用結果を取得
+- ✅ チャットAPIがカテゴリ別に正しい情報源から回答生成
+- ✅ 全テスト通過
+
+#### 次のステップ
+1. **UI改善**（任意）
+   - チャット画面の見た目調整
+   - ローディング表示の改善
+   - エラーメッセージの改善
+
+2. **データ品質向上**（任意）
+   - ゼロベクトルや重複embeddingの調査
+   - チャンク分割ロジックの改善
+
+3. **デプロイ準備**（今後）
+   - Vercel環境へのデプロイ
+   - 本番環境テスト
+
+#### 重要な決定事項
+- データベースレベルでのカテゴリフィルタリングを採用（パフォーマンス最適化）
+- 埋め込み生成失敗時はnullを返し、DB挿入時にスキップする方針
+
+#### 問題と解決
+1. **問題**: マイグレーション適用スクリプトが `exec_sql` RPC を使用（存在しない）
+   - **解決**: Supabase SQLエディタで手動適用（最も確実な方法）
+
+2. **問題**: 初回テストで `knowledge_matches: 0` と表示
+   - **解決**: APIレスポンスフィールド名が `sources` であることを確認、テストスクリプト修正
+
+#### 変更ファイル
+- `supabase/migrations/003_match_knowledge_by_category.sql` - 新規作成（カテゴリフィルタRPC関数）
+- `src/app/api/chat/route.ts` - 新RPC関数に切り替え
+- `src/lib/gemini.ts` - バッチ処理でのインデックス保持を修正
+- `scripts/ingest-data.ts` - null embeddings をスキップ
+- `scripts/ingest-btob-data.ts` - null embeddings をスキップ
+- `scripts/test-category-filter.ts` - 新規作成（テストスクリプト）
+- `scripts/test-chat-api.ts` - 新規作成（テストスクリプト）
+
+#### Git コミット
+- `c6ee76c` - Optimize category filtering with database-level search
+
+---
+
 ## テンプレート（次回以降のセッション記録用）
 
 ### セッションX: [セッション名]
