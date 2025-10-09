@@ -126,7 +126,7 @@ export async function generateEmbeddingsBatch(
   texts: string[],
   onProgress?: (current: number, total: number) => void,
   delayMs: number = 1000
-): Promise<number[][]> {
+): Promise<(number[] | null)[]> {
   const apiKey = env.geminiApiKey;
 
   if (!apiKey) {
@@ -137,7 +137,8 @@ export async function generateEmbeddingsBatch(
     return [];
   }
 
-  const allEmbeddings: number[][] = [];
+  // インデックスを保持するため、nullで初期化
+  const allEmbeddings: (number[] | null)[] = new Array(texts.length).fill(null);
   const errors: Array<{ index: number; error: string }> = [];
 
   // BATCH_SIZE個ずつに分割して処理
@@ -150,7 +151,10 @@ export async function generateEmbeddingsBatch(
       }
 
       const batchEmbeddings = await processBatch(batch);
-      allEmbeddings.push(...batchEmbeddings);
+      // バッチ結果を正しいインデックスに格納
+      for (let j = 0; j < batchEmbeddings.length; j++) {
+        allEmbeddings[i + j] = batchEmbeddings[j];
+      }
 
       // レート制限対策: 次のバッチまで待機
       if (i + BATCH_SIZE < texts.length && delayMs > 0) {
@@ -164,7 +168,7 @@ export async function generateEmbeddingsBatch(
       for (let j = 0; j < batch.length; j++) {
         try {
           const embedding = await generateEmbedding(batch[j]);
-          allEmbeddings.push(embedding);
+          allEmbeddings[i + j] = embedding; // 正しいインデックスに格納
 
           // 個別リクエスト間も少し待機
           if (j < batch.length - 1) {
@@ -177,8 +181,8 @@ export async function generateEmbeddingsBatch(
             error: individualError instanceof Error ? individualError.message : 'Unknown error',
           });
           console.error(`Failed to generate embedding for text ${idx}:`, individualError);
-          // エラーの場合は空ベクトルをプレースホルダーとして追加
-          allEmbeddings.push(new Array(768).fill(0));
+          // エラーの場合はnullのまま（インデックスを保持）
+          allEmbeddings[idx] = null;
         }
       }
     }

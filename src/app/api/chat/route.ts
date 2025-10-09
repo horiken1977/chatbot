@@ -12,6 +12,7 @@ import { getGenerationModel } from '@/lib/gemini-models';
 
 interface KnowledgeMatch {
   id: string;
+  category: string; // Top-level category from RPC function
   content: string;
   context: string;
   metadata: Record<string, unknown>;
@@ -32,26 +33,24 @@ export async function POST(request: NextRequest) {
     // 1. 質問を埋め込みベクトルに変換
     const queryEmbedding = await generateEmbedding(message);
 
-    // 2. 類似チャンクを検索（survey/question除外のため多めに取得）
+    // 2. カテゴリでフィルタして類似チャンクを検索（データベースレベルでフィルタ）
     const supabase = getSupabaseAdmin();
-    const { data: matches, error } = await supabase.rpc('match_knowledge', {
-      query_embedding: `[${queryEmbedding.join(',')}]`, // vector型の文字列表現に変換
-      match_threshold: 0.3, // しきい値を下げて幅広く取得
-      match_count: maxResults * 10, // 50件取得してsurvey/questionをフィルタ
+
+    const { data: matches, error } = await supabase.rpc('match_knowledge_by_category', {
+      query_embedding: `[${queryEmbedding.join(',')}]`,
+      filter_category: category || null,
+      match_threshold: 0.3,
+      match_count: maxResults * 10,
     });
 
     if (error) {
       throw new Error(`Knowledge search failed: ${error.message}`);
     }
 
-    // 3. カテゴリでフィルタリング（BtoB/BtoC）
-    let allMatches = (matches || []) as KnowledgeMatch[];
-    if (category) {
-      allMatches = allMatches.filter(
-        (match) => match.metadata.category === category
-      );
-      console.log(`Filtered by category (${category}): ${allMatches.length} matches`);
-    }
+    console.log(`Searched with category: ${category}, found ${matches?.length || 0} matches`);
+
+    // 3. 結果を型キャスト
+    let allMatches = matches as KnowledgeMatch[];
 
     // 4. セクション優先度でフィルタリング＆スコアリング
     const knowledgeMatches = rankAndFilterMatches(allMatches, maxResults);

@@ -128,15 +128,28 @@ async function ingestData(options: IngestionOptions = {}) {
             console.log('  💾 データベース挿入中...');
             const category = getCategoryFromSheetName(sheetName);
 
-            const insertData = chunks.map((chunk, index) => ({
-              category,
-              sheet_name: sheetName,
-              row_number: null, // チャンクの場合はnull
-              content: chunk.content,
-              context: chunk.context,
-              metadata: chunk.metadata,
-              embedding: `[${embeddings[index].join(',')}]`, // vector型の文字列表現に変換
-            }));
+            // nullのembeddingをスキップしてinsertDataを作成
+            const insertData = chunks
+              .map((chunk, index) => ({
+                chunk,
+                embedding: embeddings[index],
+                index,
+              }))
+              .filter((item) => item.embedding !== null) // nullをフィルタ
+              .map((item) => ({
+                category,
+                sheet_name: sheetName,
+                row_number: null, // チャンクの場合はnull
+                content: item.chunk.content,
+                context: item.chunk.context,
+                metadata: item.chunk.metadata,
+                embedding: `[${item.embedding!.join(',')}]`, // vector型の文字列表現に変換
+              }));
+
+            const skippedCount = chunks.length - insertData.length;
+            if (skippedCount > 0) {
+              console.log(`  ⚠️  ${skippedCount}チャンクをスキップ（embedding生成失敗）`);
+            }
 
             const { data, error } = await supabase.from('knowledge_base').insert(insertData).select();
 
