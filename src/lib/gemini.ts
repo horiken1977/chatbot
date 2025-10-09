@@ -279,11 +279,17 @@ export async function generateEmbeddingForLongText(text: string, maxChars: numbe
   // 各チャンクの埋め込みを生成
   const embeddings = await generateEmbeddingsBatch(chunks);
 
-  // 平均ベクトルを計算
+  // 平均ベクトルを計算（nullをフィルタ）
+  const validEmbeddings = embeddings.filter((e): e is number[] => e !== null);
+
+  if (validEmbeddings.length === 0) {
+    throw new Error('No valid embeddings generated for chunks');
+  }
+
   const avgEmbedding = new Array(768).fill(0);
-  embeddings.forEach((embedding) => {
+  validEmbeddings.forEach((embedding) => {
     embedding.forEach((value, index) => {
-      avgEmbedding[index] += value / embeddings.length;
+      avgEmbedding[index] += value / validEmbeddings.length;
     });
   });
 
