@@ -152,9 +152,13 @@ function rankAndFilterMatches(matches: KnowledgeMatch[], limit: number): Knowled
     };
   });
 
-  // survey/questionタイプを除外（学習者への質問は回答内容ではないため）
+  // survey/questionタイプ、およびPostTestセクションを除外
+  // （学習者へのテスト問題は回答内容として不適切なため）
   const filteredMatches = scoredMatches.filter(
-    (match) => match.metadata.type !== 'survey' && match.metadata.type !== 'question'
+    (match) =>
+      match.metadata.type !== 'survey' &&
+      match.metadata.type !== 'question' &&
+      match.metadata.section !== 'PostTest'
   );
 
   // 調整後スコアでソート
